@@ -39,25 +39,29 @@ final class TaskEditViewReactor: Reactor {
     
     enum Action {
         case updateTaskTitle(String)
+        case updateTaskDescription(String)
         case cancel
         case submit
     }
     
     enum Mutation {
         case updateTaskTitle(String)
+        case updateTaskDescription(String)
         case dismiss
     }
     
     struct State {
         var title: String
         var taskTitle: String
+        var taskDescription: String
         var canSubmit: Bool
         var shouldConfirmCancel: Bool
         var isDismissed: Bool
         
-        init(title: String, taskTitle: String, canSubmit: Bool) {
+        init(title: String, taskTitle: String, taskDescription: String, canSubmit: Bool) {
             self.title = title
             self.taskTitle = taskTitle
+            self.taskDescription = taskDescription
             self.canSubmit = canSubmit
             self.shouldConfirmCancel = false
             self.isDismissed = false
@@ -74,9 +78,9 @@ final class TaskEditViewReactor: Reactor {
         
         switch mode {
         case .new:
-            self.initialState = State(title: "New", taskTitle: "", canSubmit: false)
+            self.initialState = State(title: "New", taskTitle: "", taskDescription: "", canSubmit: false)
         case .edit(let task):
-            self.initialState = State(title: "Edit", taskTitle: task.title, canSubmit: true)
+            self.initialState = State(title: "Edit", taskTitle: task.title, taskDescription: task.description, canSubmit: true)
         }
     }
     
@@ -85,17 +89,20 @@ final class TaskEditViewReactor: Reactor {
         case let .updateTaskTitle(taskTitle):
             return .just(.updateTaskTitle(taskTitle))
             
+        case let .updateTaskDescription(taskDescription):
+            return .just(.updateTaskDescription(taskDescription))
+            
         case .submit:
             guard self.currentState.canSubmit else { return .empty() }
             switch self.mode {
             case .new:
                 return self.provider.taskService
-                    .create(title: self.currentState.taskTitle, memo: nil)
+                    .create(title: self.currentState.taskTitle, description: self.currentState.taskDescription, memo: nil)
                     .map { _ in .dismiss }
                 
             case .edit(let task):
                 return self.provider.taskService
-                    .update(taskID: task.id, title: self.currentState.taskTitle, memo: nil)
+                    .update(taskID: task.id, title: self.currentState.taskTitle, description: self.currentState.taskDescription, memo: nil)
                     .map { _ in .dismiss }
             }
             
@@ -128,14 +135,18 @@ final class TaskEditViewReactor: Reactor {
         switch mutation {
         case let .updateTaskTitle(taskTitle):
             state.taskTitle = taskTitle
-            state.canSubmit = !taskTitle.isEmpty
+            state.canSubmit = !taskTitle.isEmpty && !state.taskDescription.isEmpty
             state.shouldConfirmCancel = taskTitle != self.initialState.taskTitle
-            return state
+            
+        case let .updateTaskDescription(taskDescription):
+            state.taskDescription = taskDescription
+            state.canSubmit = !taskDescription.isEmpty && !state.taskTitle.isEmpty
             
         case .dismiss:
             state.isDismissed = true
-            return state
         }
+        
+        return state
     }
     
 }

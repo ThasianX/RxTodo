@@ -24,8 +24,8 @@ protocol TaskServiceType {
     @discardableResult
     func saveTasks(_ tasks: [Task]) -> Observable<Void>
     
-    func create(title: String, memo: String?) -> Observable<Task>
-    func update(taskID: String, title: String, memo: String?) -> Observable<Task>
+    func create(title: String, description: String, memo: String?) -> Observable<Task>
+    func update(taskID: String, title: String, description: String, memo: String?) -> Observable<Task>
     func delete(taskID: String) -> Observable<Task>
     func move(taskID: String, to: Int) -> Observable<Task>
     func markAsDone(taskID: String) -> Observable<Task>
@@ -42,9 +42,9 @@ final class TaskService: BaseService, TaskServiceType {
             return .just(tasks)
         }
         let defaultTasks: [Task] = [
-            Task(title: "Go to https://github.com/devxoul"),
-            Task(title: "Star repositories I am intersted in"),
-            Task(title: "Make a pull request"),
+            Task(title: "Go to https://github.com/devxoul", description: "Do this before 9 oclock. Then go eat dinner"),
+            Task(title: "Star repositories I am intersted in", description: "There is this one repository for screen savers which is quite sick"),
+            Task(title: "Make a pull request", description: "First pull request. Probably gonna do documentation"),
         ]
         let defaultTaskDictionaries = defaultTasks.map { $0.asDictionary() }
         self.provider.userDefaultsService.set(value: defaultTaskDictionaries, forKey: .tasks)
@@ -58,11 +58,11 @@ final class TaskService: BaseService, TaskServiceType {
         return .just(Void())
     }
     
-    func create(title: String, memo: String?) -> Observable<Task> {
+    func create(title: String, description: String, memo: String?) -> Observable<Task> {
         return self.fetchTasks()
             .flatMap { [weak self] tasks -> Observable<Task> in
                 guard let `self` = self else { return .empty() }
-                let newTask = Task(title: title, memo: memo)
+                let newTask = Task(title: title, description: description, memo: memo)
                 return self.saveTasks(tasks + [newTask]).map { newTask }
         }
         .do(onNext: { task in
@@ -70,7 +70,7 @@ final class TaskService: BaseService, TaskServiceType {
         })
     }
     
-    func update(taskID: String, title: String, memo: String?) -> Observable<Task> {
+    func update(taskID: String, title: String, description: String, memo: String?) -> Observable<Task> {
         return self.fetchTasks()
             .flatMap { [weak self] tasks -> Observable<Task> in
                 guard let `self` = self else { return .empty() }
@@ -78,6 +78,7 @@ final class TaskService: BaseService, TaskServiceType {
                 var tasks = tasks
                 let newTask = tasks[index].with {
                     $0.title = title
+                    $0.description = description
                     $0.memo = memo
                 }
                 tasks[index] = newTask

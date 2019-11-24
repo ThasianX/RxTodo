@@ -33,11 +33,15 @@ final class TaskListViewController: BaseViewController, View {
     })
     
     let addButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: nil, action: nil)
+//
+//    let tableView = UITableView().then {
+//        $0.allowsSelectionDuringEditing = true
+//        $0.estimatedRowHeight = UITableView.automaticDimension
+//        $0.rowHeight = UITableView.automaticDimension
+//        $0.register(Reusable.taskCell)
+//    }
     
-    let tableView = UITableView().then {
-        $0.allowsSelectionDuringEditing = true
-        $0.register(Reusable.taskCell)
-    }
+    let tableView = UITableView()
     
     
     // MARK: Initializing
@@ -48,6 +52,13 @@ final class TaskListViewController: BaseViewController, View {
     
         self.navigationItem.leftBarButtonItem = self.editButtonItem
         self.navigationItem.rightBarButtonItem = self.addButtonItem
+        
+
+        tableView.allowsSelectionDuringEditing = true
+        tableView.estimatedRowHeight = 100
+        tableView.rowHeight = UITableView.automaticDimension
+        tableView.register(Reusable.taskCell)
+        
         
         self.reactor = reactor
     }
@@ -66,9 +77,15 @@ final class TaskListViewController: BaseViewController, View {
     
     override func setupConstraints() {
         super.setupConstraints()
-        self.tableView.snp.makeConstraints { make in
-            make.edges.equalTo(0)
-        }
+//        self.tableView.snp.makeConstraints { make in
+//            make.edges.equalTo(0)
+//        }
+        
+        tableView.translatesAutoresizingMaskIntoConstraints = false
+        tableView.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
+        tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
+        tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
+        tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
     }
     
     
@@ -151,14 +168,18 @@ final class TaskListViewController: BaseViewController, View {
 // MARK: - UITableViewDelegate
 
 extension TaskListViewController: UITableViewDelegate {
-    
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        let reactor = self.dataSource[indexPath]
-        return TaskCell.height(fits: tableView.width, reactor: reactor)
-    }
+//
+//    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+//        let reactor = self.dataSource[indexPath]
+//        return TaskCell.height(fits: tableView.width, reactor: reactor)
+//    }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
+    }
+    
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return UITableView.automaticDimension
     }
     
 }

@@ -38,7 +38,14 @@ final class TaskEditViewController: BaseViewController, View {
         $0.autocorrectionType = .no
         $0.borderStyle = .roundedRect
         $0.font = Font.titleLabel
-        $0.placeholder = "Do something..."
+        $0.placeholder = "Task name..."
+    }
+    
+    let descriptionInput = UITextField().then {
+        $0.autocorrectionType = .no
+        $0.borderStyle = .roundedRect
+        $0.font = Font.titleLabel
+        $0.placeholder = "Task description..."
     }
     
     
@@ -62,6 +69,7 @@ final class TaskEditViewController: BaseViewController, View {
         super.viewDidLoad()
         self.view.backgroundColor = .white
         self.view.addSubview(self.titleInput)
+        self.view.addSubview(self.descriptionInput)
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -70,11 +78,30 @@ final class TaskEditViewController: BaseViewController, View {
     }
     
     override func setupConstraints() {
-        self.titleInput.snp.makeConstraints { make in
-            make.top.equalTo(self.topLayoutGuide.snp.bottom).offset(Metric.padding)
-            make.left.equalTo(Metric.padding)
-            make.right.equalTo(-Metric.padding)
-        }
+        let marginGuide = self.view.safeAreaLayoutGuide
+        
+        self.titleInput.translatesAutoresizingMaskIntoConstraints = false
+        
+        self.titleInput.topAnchor.constraint(equalTo: marginGuide.topAnchor, constant: Metric.padding).isActive = true
+        
+        self.titleInput.leadingAnchor.constraint(equalTo: marginGuide.leadingAnchor, constant: Metric.padding).isActive = true
+        
+        self.titleInput.trailingAnchor.constraint(equalTo: marginGuide.trailingAnchor, constant: -Metric.padding).isActive = true
+        
+        self.descriptionInput.translatesAutoresizingMaskIntoConstraints = false
+        
+        self.descriptionInput.topAnchor.constraint(equalTo: titleInput.bottomAnchor, constant: Metric.padding).isActive = true
+        
+        self.descriptionInput.leadingAnchor.constraint(equalTo: marginGuide.leadingAnchor, constant: Metric.padding).isActive = true
+        
+        self.descriptionInput.trailingAnchor.constraint(equalTo: marginGuide.trailingAnchor, constant: -Metric.padding).isActive = true
+        
+        
+//        self.titleInput.snp.makeConstraints { make in
+//            make.top.equalTo(self.topLayoutGuide.snp.bottom).offset(Metric.padding)
+//            make.left.equalTo(Metric.padding)
+//            make.right.equalTo(-Metric.padding)
+//        }
     }
     
     
@@ -99,6 +126,13 @@ final class TaskEditViewController: BaseViewController, View {
             .bind(to: reactor.action)
             .disposed(by: self.disposeBag)
         
+        self.descriptionInput.rx.text
+            .filterNil()
+            .skip(1)
+            .map(Reactor.Action.updateTaskDescription)
+            .bind(to: reactor.action)
+            .disposed(by: self.disposeBag)
+        
         // State
         reactor.state.asObservable().map { $0.title }
             .distinctUntilChanged()
@@ -109,6 +143,11 @@ final class TaskEditViewController: BaseViewController, View {
             .distinctUntilChanged()
             .bind(to: self.titleInput.rx.text)
             .disposed(by: self.disposeBag)
+        
+        reactor.state.asObservable().map { $0.taskDescription }
+        .distinctUntilChanged()
+        .bind(to: self.descriptionInput.rx.text)
+        .disposed(by: self.disposeBag)
         
         reactor.state.asObservable().map { $0.canSubmit }
             .distinctUntilChanged()
